@@ -80,11 +80,11 @@ export async function runCode(code: string, edition = '2021'): Promise<RunResult
   return res.json()
 }
 
-export async function submitExercise(exerciseId: number, code: string): Promise<SubmitResult> {
+export async function submitExercise(exerciseId: number, submission: { code?: string; answer?: string }): Promise<SubmitResult> {
   const uid = getUser()?.user_id || 'local'
   const res = await fetch(`${BASE}/submit?user_id=${uid}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify({ exercise_id: exerciseId, code }),
+    body: JSON.stringify({ exercise_id: exerciseId, ...submission }),
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
@@ -92,10 +92,11 @@ export async function submitExercise(exerciseId: number, code: string): Promise<
 
 export async function updateProgress(chapterId: number, status: string): Promise<void> {
   const uid = getUser()?.user_id || 'local'
-  await fetch(`${BASE}/progress?user_id=${uid}`, {
+  const res = await fetch(`${BASE}/progress?user_id=${uid}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify({ chapter_id: chapterId, status }),
   })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
 }
 
 export async function detectEnv(): Promise<EnvDetection> {

@@ -59,7 +59,8 @@ class CodeRunResponse(BaseModel):
 # --- Exercise Submission ---
 class SubmitRequest(BaseModel):
     exercise_id: int
-    code: str
+    code: str = ""
+    answer: str | None = None
 
 
 class SubmitResponse(BaseModel):

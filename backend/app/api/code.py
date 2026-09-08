@@ -34,40 +34,35 @@ async def submit_exercise(
     if not ex:
         return SubmitResponse(passed=False, stdout="", stderr="练习不存在", submission_id=0)
 
-    # Execute based on exercise type
-    if ex.type == "test":
+    # Output-prediction exercises grade the learner's answer without executing
+    # the provided read-only code and revealing its output.
+    if ex.type == "output":
+        def normalize(value: str) -> str:
+            normalized = value.replace("\r\n", "\n").replace("\r", "\n").strip()
+            return "\n".join(line.rstrip() for line in normalized.split("\n"))
+
+        actual = normalize(body.answer or "")
+        expected = normalize(ex.solution_code)
+        passed = actual == expected
+        feedback = "✅ 预测正确！" if passed else "❌ 预测不正确，请检查大小写、标点、空格和换行。"
+        result = {"stdout": "", "stderr": "", "exit_code": 0, "timed_out": False}
+    elif ex.type == "test":
         # Test type: wrap user code as lib + append test functions
         test_code = f"{body.code}\n\n{ex.test_code}"
         result = await run_test_code(test_code)
+        result["_code"] = body.code
+        passed, feedback = check_passed(exercise_type=ex.type, result=result)
     else:
         result = await run_rust_code(body.code)
-
-    # Judge with type-specific logic
-    passed, feedback = check_passed(
-        exercise_type=ex.type,
-        result=result,
-        expected_output=ex.solution_code if ex.type == "output" else "",
-    )
-    # Inject code for fill-type placeholder check
-    result["_code"] = body.code
-
-    # For output type, do the actual check with the solution as expected output
-    if ex.type == "output" and ex.solution_code:
-        actual = result["stdout"].strip()
-        expected = ex.solution_code.strip()
-        passed = actual == expected and result["exit_code"] == 0
-        if passed:
-            feedback = "✅ 输出正确！"
-        elif result["exit_code"] != 0:
-            feedback = "❌ 编译失败"
-        else:
-            feedback = f"❌ 输出不正确\n期望:\n{expected}\n\n实际:\n{actual}"
+        # Fill exercises need the submitted source during judging.
+        result["_code"] = body.code
+        passed, feedback = check_passed(exercise_type=ex.type, result=result)
 
     # Save submission
     submission = Submission(
         user_id=uid,
         exercise_id=body.exercise_id,
-        code=body.code,
+        code=(body.answer or "") if ex.type == "output" else body.code,
         stdout=result["stdout"],
         stderr=feedback,  # Store feedback in stderr field
         passed=passed,

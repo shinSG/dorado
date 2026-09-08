@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
+import type { ReactElement } from 'react'
 import { CheckCircle, Lock, Unlock, Loader } from 'lucide-react'
 import type { Chapter } from '../api'
 
-const statusIcon: Record<string, JSX.Element> = {
+const statusIcon: Record<string, ReactElement> = {
   completed: <CheckCircle className="w-5 h-5 text-green-500" />,
   in_progress: <Loader className="w-5 h-5 text-blue-400 animate-spin" />,
   unlocked: <Unlock className="w-5 h-5 text-orange-500" />,
