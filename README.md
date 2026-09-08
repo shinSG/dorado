@@ -122,7 +122,7 @@ dorado/
 | `DORADO_SANDBOX_IMAGE` | `dorado-sandbox:latest` | 沙箱镜像名 |
 | `DORADO_SANDBOX_TIMEOUT` | `10` | 代码执行超时 (秒) |
 | `DORADO_SANDBOX_MEMORY` | `256m` | 容器内存限制 |
-| `DORADO_SANDBOX_POOL_SIZE` | `3` | 预热容器数量 |
+| `DORADO_SANDBOX_POOL_SIZE` | `0` | 预热容器数量（当前执行路径不使用容器池） |
 
 ## API 端点
 

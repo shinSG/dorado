@@ -18,7 +18,7 @@ SANDBOX_IMAGE = os.getenv("DORADO_SANDBOX_IMAGE", "dorado-sandbox:latest")
 SANDBOX_TIMEOUT = int(os.getenv("DORADO_SANDBOX_TIMEOUT", "10"))  # seconds
 SANDBOX_MEMORY = os.getenv("DORADO_SANDBOX_MEMORY", "256m")
 SANDBOX_CPU = os.getenv("DORADO_SANDBOX_CPU", "1.0")
-SANDBOX_POOL_SIZE = int(os.getenv("DORADO_SANDBOX_POOL_SIZE", "3"))
+SANDBOX_POOL_SIZE = int(os.getenv("DORADO_SANDBOX_POOL_SIZE", "0"))
 
 # Server
 HOST = os.getenv("DORADO_HOST", "0.0.0.0")

@@ -137,8 +137,34 @@ async def init_pool():
 
 
 # ─── Code Execution ──────────────────────────────────────────────
+async def _sandbox_unavailable_result() -> dict | None:
+    """Return a clear infrastructure error when the runner image is missing."""
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "docker", "image", "inspect", SANDBOX_IMAGE,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        _, stderr = await asyncio.wait_for(proc.communicate(), timeout=5)
+        if proc.returncode == 0:
+            return None
+        detail = stderr.decode(errors="replace").strip()
+    except (FileNotFoundError, asyncio.TimeoutError):
+        detail = "Docker 服务不可用"
+
+    return {
+        "stdout": "",
+        "stderr": f"运行环境未就绪：未找到沙箱镜像 {SANDBOX_IMAGE}。{detail}",
+        "exit_code": -2,
+        "timed_out": False,
+    }
+
+
 async def run_rust_code(code: str, edition: str = "2021") -> dict:
     """Execute Rust code in a Docker sandbox."""
+    unavailable = await _sandbox_unavailable_result()
+    if unavailable:
+        return unavailable
     tmpdir = tempfile.mkdtemp(prefix="dorado_")
     try:
         src_dir = os.path.join(tmpdir, "src")
@@ -156,6 +182,9 @@ async def run_rust_code(code: str, edition: str = "2021") -> dict:
 
 async def run_test_code(code: str) -> dict:
     """Run code with cargo test."""
+    unavailable = await _sandbox_unavailable_result()
+    if unavailable:
+        return unavailable
     tmpdir = tempfile.mkdtemp(prefix="dorado_test_")
     try:
         src_dir = os.path.join(tmpdir, "src")
@@ -173,7 +202,7 @@ async def run_test_code(code: str) -> dict:
 
 def _build_docker_cmd(tmpdir: str, run_cmd: str) -> list[str]:
     return [
-        "docker", "run", "--rm",
+        "docker", "run", "--rm", "--pull=never",
         "--network=none",
         f"--memory={SANDBOX_MEMORY}",
         f"--cpus={SANDBOX_CPU}",
@@ -195,6 +224,13 @@ async def _exec_in_docker(cmd: list[str]) -> dict:
         )
         raw_stdout = stdout.decode(errors="replace")
         raw_stderr = stderr.decode(errors="replace")
+        if proc.returncode == 124:
+            return {
+                "stdout": raw_stdout,
+                "stderr": f"执行超时（{SANDBOX_TIMEOUT}秒）",
+                "exit_code": 124,
+                "timed_out": True,
+            }
         # Docker captures both stdout and stderr in stdout with 2>&1,
         # but stderr may still have container-level errors
         return {
