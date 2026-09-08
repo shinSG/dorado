@@ -77,7 +77,10 @@ a.course-row:hover { background: #1b1e22; }
 .sidebar-item.selected { color: #ed9753; background: #29221d; }
 .learning-main { min-width: 0; max-width: 1440px; width: 100%; padding: 24px 32px 40px; margin: auto; }
 .chapter-toolbar { display: flex; align-items: center; gap: 14px; }
-.chapter-toolbar h1 { font-size: 19px; font-weight: 600; flex: 1; }
+.chapter-toolbar h1 { font-size: 19px; font-weight: 600; }
+.chapter-progress { margin-left: auto; }
+.knowledge-button { padding: 7px 11px; border: 1px solid #343940; background: transparent; color: #b8bec6; }
+.knowledge-button:hover { border-color: #67503f; background: #251f1a; color: #f0b98f; }
 .icon-button { color: #a1a6ae; padding: 8px; background: #202328; border-radius: 5px; }
 .exercise-tabs { display: flex; overflow-x: auto; border-bottom: 1px solid #2c3035; margin-top: 20px; gap: 24px; }
 .exercise-tabs button { display: flex; gap: 8px; align-items: center; padding: 14px 0; white-space: nowrap; color: #9299a3; border-bottom: 2px solid transparent; }
@@ -109,8 +112,17 @@ summary { cursor: pointer; font-size: 13px; }
 .error-message { color: #f4a096; margin: 14px 0; }
 .passed-box { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 16px 0; color: #81c798; border-top: 1px solid #2c3931; }
 .passed-box button { margin-left: auto; }
-.chapter-knowledge { border-top: 1px solid #2e333a; margin-top: 32px; padding-top: 20px; }
-.chapter-knowledge article { max-width: 780px; padding: 20px 0; }
+.knowledge-dialog { position: fixed; inset: 50% auto auto 50%; transform: translate(-50%, -50%); width: min(920px, calc(100vw - 48px)); max-width: none; height: min(760px, calc(100vh - 64px)); max-height: none; margin: 0; padding: 0; border: 1px solid #353a42; border-top-color: #5a4333; border-radius: 14px; background: #181b1f; color: #e6e8ec; box-shadow: 0 28px 90px rgb(0 0 0 / 62%); overflow: hidden; }
+.knowledge-dialog::backdrop { background: rgb(5 7 9 / 76%); backdrop-filter: blur(3px); }
+.knowledge-dialog-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.knowledge-dialog-header { position: relative; flex: none; padding: 22px max(68px, calc((100% - 760px) / 2)) 19px max(24px, calc((100% - 760px) / 2)); border-bottom: 1px solid #2d3238; background: linear-gradient(180deg, #1c1f23 0%, #1a1d21 100%); }
+.knowledge-dialog-header h2 { margin: 7px 0 0; font-size: 20px; font-weight: 600; letter-spacing: -.25px; }
+.knowledge-dialog-close { position: absolute; top: 18px; right: 18px; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid transparent; border-radius: 50%; background: transparent; color: #858d98; transition: color .16s, background-color .16s, border-color .16s, transform .16s; }
+.knowledge-dialog-close:hover { border-color: #414750; background: #292d32; color: #f0f2f4; }
+.knowledge-dialog-close:active { transform: scale(.94); }
+.knowledge-dialog-close:focus-visible { outline: 2px solid #ed9753; outline-offset: 2px; }
+.knowledge-dialog-content { width: 100%; min-height: 0; padding: 10px max(24px, calc((100% - 760px) / 2)) 32px; overflow-y: auto; overscroll-behavior: contain; }
+.knowledge-dialog-content > h1:first-child { display: none; }
 .lesson-markdown { font-size: 14px; line-height: 1.85; color: #bec4cd; overflow-wrap: anywhere; }
 .lesson-markdown p { margin: 10px 0; }
 .lesson-markdown h1, .lesson-markdown h2, .lesson-markdown h3 { font-size: 19px; color: #eee; margin: 22px 0 10px; font-weight: 600; }
@@ -190,6 +202,12 @@ summary { cursor: pointer; font-size: 13px; }
   .mobile-tabs { display: flex; margin-top: 16px; }
   .mobile-hidden { display: none; }
   .chapter-toolbar h1 { font-size: 16px; }
+  .chapter-toolbar { flex-wrap: wrap; }
+  .chapter-toolbar .knowledge-button { order: 4; width: 100%; }
+  .knowledge-dialog { width: calc(100vw - 24px); height: calc(100vh - 24px); }
+  .knowledge-dialog-header { padding: 18px 58px 16px 18px; }
+  .knowledge-dialog-close { top: 14px; right: 14px; }
+  .knowledge-dialog-content { padding: 8px 18px 22px; }
   .chapter-finish { flex-direction: column; align-items: flex-start; }
   .course-row { gap: 14px; }
 }

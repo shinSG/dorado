@@ -1,12 +1,44 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { ArrowRight, Check, PanelLeft, Play, Send } from 'lucide-react'
+import { ArrowRight, BookOpen, Check, PanelLeft, Play, Send, X } from 'lucide-react'
 import { fetchChapter, fetchChapters, runCode, submitExercise, updateProgress, type Chapter, type ChapterDetail, type Exercise, type RunResult } from '../api'
 import { availableChapters, readSaved, save } from '../learning'
 import CodeEditor from '../components/CodeEditor'
 import OutputPanel from '../components/OutputPanel'
+
+function KnowledgeDialog({ title, content, open, onClose }: { title: string; content: string; open: boolean; onClose: () => void }) {
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const contentRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    if (open && !dialog.open) {
+      if (contentRef.current) contentRef.current.scrollTop = 0
+      dialog.showModal()
+    }
+    if (!open && dialog.open) dialog.close()
+  }, [open])
+
+  return <dialog
+    ref={dialogRef}
+    className="knowledge-dialog"
+    aria-labelledby="knowledge-dialog-title"
+    onCancel={onClose}
+    onClose={onClose}
+    onClick={event => { if (event.target === event.currentTarget) onClose() }}
+  >
+    <div className="knowledge-dialog-panel">
+      <header className="knowledge-dialog-header">
+        <div><span className="eyebrow">相关知识点</span><h2 id="knowledge-dialog-title">{title}</h2></div>
+        <button className="knowledge-dialog-close" aria-label="关闭相关知识点" title="关闭" onClick={onClose}><X size={17} /></button>
+      </header>
+      <article ref={contentRef} className="lesson-markdown knowledge-dialog-content"><ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown></article>
+    </div>
+  </dialog>
+}
 
 function ExerciseWorkspace({ exercise, onPassed, next }: { exercise: Exercise; onPassed: () => Promise<void>; next: () => void }) {
   const isOutput = exercise.type === 'output'
@@ -80,6 +112,7 @@ function ChapterScreen({ slug }: { slug: string }) {
   const [active, setActive] = useState(0)
   const [error, setError] = useState('')
   const [sidebar, setSidebar] = useState(false)
+  const [knowledgeOpen, setKnowledgeOpen] = useState(false)
   const [completeError, setCompleteError] = useState('')
   useEffect(() => {
     let cancelled = false
@@ -124,10 +157,10 @@ function ChapterScreen({ slug }: { slug: string }) {
       ? <span className="sidebar-item locked" key={ch.id}>{String(ch.order).padStart(2, '0')} {ch.title}</span>
       : <Link onClick={() => setSidebar(false)} className={'sidebar-item ' + (ch.id === chapter.id ? 'selected' : '')} to={'/chapter/' + ch.slug} key={ch.id}>{String(ch.order).padStart(2, '0')} {ch.title}{ch.progress_status === 'completed' && <Check size={13} />}</Link>)}</aside>
     <div className="learning-main">
-      <div className="chapter-toolbar"><button className="icon-button" aria-label={sidebar ? '收起目录' : '展开目录'} aria-expanded={sidebar} onClick={() => setSidebar(!sidebar)}><PanelLeft size={18} /></button><h1>{chapter.title}</h1><span className="muted">{done} / {chapter.exercises.length} 已通过</span></div>
+      <div className="chapter-toolbar"><button className="icon-button" aria-label={sidebar ? '收起目录' : '展开目录'} aria-expanded={sidebar} onClick={() => setSidebar(!sidebar)}><PanelLeft size={18} /></button><h1>{chapter.title}</h1><button className="button knowledge-button" onClick={() => setKnowledgeOpen(true)}><BookOpen size={16} />相关知识点</button><span className="muted chapter-progress">{done} / {chapter.exercises.length} 已通过</span></div>
       <div className="exercise-tabs" aria-label="选择练习">{chapter.exercises.map((ex, index) => <button key={ex.id} className={index === active ? 'active' : ''} aria-pressed={index === active} onClick={() => select(index)}>{ex.passed ? <Check size={14} /> : <span>{index + 1}</span>}{ex.title}</button>)}</div>
       {exercise ? <ExerciseWorkspace key={exercise.id} exercise={exercise} onPassed={passed} next={() => { if (active + 1 < chapter.exercises.length) select(active + 1); else if (!allPassed) select(chapter.exercises.findIndex(ex => !ex.passed)); else document.getElementById('chapter-finish')?.scrollIntoView({ behavior: 'smooth' }) }} /> : <div className="empty-state">本章暂无练习，可以先阅读相关知识。</div>}
-      <details className="chapter-knowledge"><summary>相关知识 · {chapter.title}</summary><article className="lesson-markdown"><ReactMarkdown remarkPlugins={[remarkGfm]}>{chapter.content}</ReactMarkdown></article></details>
+      <KnowledgeDialog title={chapter.title} content={chapter.content} open={knowledgeOpen} onClose={() => setKnowledgeOpen(false)} />
       {allPassed && <div className="chapter-finish" id="chapter-finish"><div><strong>本章练习全部通过</strong><p className="muted">{completeError || (chapter.progress_status === 'completed' ? '进度已保存，继续下一个小目标。' : '保存本章进度后继续学习。')}</p></div>{chapter.progress_status !== 'completed' ? <button className="button primary" onClick={() => void complete()}>保存进度</button> : <Link className="button primary" to={nextChapter ? '/chapter/' + nextChapter.slug : '/'}>{nextChapter ? '下一章' : '返回课程'}<ArrowRight size={16} /></Link>}</div>}
     </div>
   </div>
